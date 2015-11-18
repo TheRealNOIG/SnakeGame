@@ -12,7 +12,7 @@ namespace SnakeGame
 {
 
     enum Direction { up, down, left, right}
-    enum State { game, gameOver}
+    enum State { game, gameOver, gamePuased}
 
     public partial class Form1 : Form
     {
