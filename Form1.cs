@@ -20,6 +20,7 @@ namespace SnakeGame
 
         private List<Point> snake = new List<Point>();
         private Point newPoint = new Point();
+        private Point lastPoint = new Point();
         private Brush snakeColor = new SolidBrush(Color.Green);
         private Brush snakeHeadColor = new SolidBrush(Color.DarkRed);
         private Pen pen = new Pen(Color.Black, 1);
@@ -30,6 +31,12 @@ namespace SnakeGame
         private Size gridSize = new Size(40, 30);
         private int blockSize = 25;
         private Rectangle[,] grid;
+        private Brush boarderColor = new SolidBrush(Color.Black);
+
+        private Random rnd = new Random();
+        private Point foodPoint;
+
+        private bool directionUpdated = true;
 
         public Form1()
         {
@@ -37,6 +44,7 @@ namespace SnakeGame
             this.ClientSize = new Size(gridSize.Width * blockSize, gridSize.Height * blockSize);
             MakeGrid();
             MakeSnake();
+            makeFood();
         }
 
         private void MakeSnake() {
@@ -44,6 +52,14 @@ namespace SnakeGame
             int posX = gridSize.Width / 2, posY = gridSize.Height / 2;
             for (int i = 0; i < 4; i++)
                 snake.Add(new Point(posX - 1, posY + i));
+            lastPoint = snake[3];
+            snakeColor = new SolidBrush(Color.Green);
+        }
+
+        private void killSnake()
+        {
+            state = State.gameOver;
+            snakeColor = new SolidBrush(Color.Red);
         }
 
         private void MakeGrid() {
@@ -57,11 +73,16 @@ namespace SnakeGame
             }
         }
 
+        private void addBlockToSnake() {
+            snake.Add(new Point(lastPoint.X, lastPoint.Y));
+        }
 
         private void MoveSnake() {
+            lastPoint = newPoint;
             newPoint = snake[0];
 
-            switch (direction) {
+            switch (direction)
+            {
                 case Direction.up:
                     newPoint.Y--;
                     break;
@@ -81,23 +102,59 @@ namespace SnakeGame
                 snake[k] = snake[k - 1];
             }
             snake[0] = newPoint;
+            directionUpdated = true;
+        }
+
+        private void makeFood()
+        {
+            bool good = true;
+            int x = rnd.Next(1, gridSize.Width - 1), y = rnd.Next(1, gridSize.Height - 1);
+            for (int i = 1; i < snake.Count; i++)
+            {
+                if (snake[i] == new Point(x, y))
+                    good = false;
+            }
+
+            if (good == true)
+            {
+                foodPoint = new Point(x, y);
+            }
+            else
+            {
+                makeFood();
+            }
         }
 
         private void collisionTest() {
-            if (snake[0].X == 0) {
-                state = State.gameOver;
+            if (snake[0].X == 0)
+            {
+                killSnake();
             }
             if (snake[0].X == gridSize.Width - 1)
             {
-                state = State.gameOver;
+                killSnake();
             }
             if (snake[0].Y == 0)
             {
-                state = State.gameOver;
+                killSnake();
             }
             if (snake[0].Y == gridSize.Height - 1)
             {
-                state = State.gameOver;
+                killSnake();
+            }
+
+            for (int i = 1; i < snake.Count; i++)
+            {
+                if (snake[0] == snake[i])
+                {
+                    killSnake();
+                }
+            }
+
+            if (snake[0] == foodPoint)
+            {
+                snake.Add(new Point(lastPoint.X, lastPoint.Y));
+                makeFood();
             }
         }
 
@@ -105,53 +162,103 @@ namespace SnakeGame
         private void Form1_Paint(object sender, PaintEventArgs e)
         {
 
-            for (int i = 0; i < snake.Count; i++) {
-                if(i == 0)
+            for (int i = 0; i < gridSize.Width; i++)
+            {
+                e.Graphics.FillRectangle(boarderColor, grid[i, 0]);
+                e.Graphics.FillRectangle(boarderColor, grid[i, gridSize.Height - 1]);
+            }
+            for (int i = 0; i < gridSize.Height; i++)
+            {
+                e.Graphics.FillRectangle(boarderColor, grid[0, i]);
+                e.Graphics.FillRectangle(boarderColor, grid[gridSize.Width - 1, i]);
+            }
+
+            for (int i = 0; i < snake.Count; i++)
+            {
+                if (i == 0)
                     e.Graphics.FillRectangle(snakeHeadColor, grid[snake[i].X, snake[i].Y]);
                 else
                     e.Graphics.FillRectangle(snakeColor, grid[snake[i].X, snake[i].Y]);
             }
 
+            e.Graphics.FillRectangle(new SolidBrush(Color.Purple), grid[foodPoint.X, foodPoint.Y]);
+
+
+            /*
             for (int i = 0; i < gridSize.Width - 2; i++)
             {
                 for (int w = 0; w < gridSize.Height - 2; w++)
                 {
-                    e.Graphics.DrawRectangle(pen, grid[i + 1, w + 1]);
+                    //e.Graphics.DrawRectangle(pen, grid[i + 1, w + 1]);
                 }
-            }
+            }*/
 
         }
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            switch (e.KeyCode) {
+            switch (e.KeyCode)
+            {
                 case Keys.W:
                 case Keys.Up:
-                    if (direction != Direction.down && direction != Direction.up)
+                    if (direction != Direction.down && direction != Direction.up && directionUpdated == true)
+                    {
                         direction = Direction.up;
+                        directionUpdated = false;
+                    }
                     break;
                 case Keys.D:
                 case Keys.Right:
-                    if (direction != Direction.left && direction != Direction.right)
+                    if (direction != Direction.left && direction != Direction.right && directionUpdated == true)
+                    {
                         direction = Direction.right;
+                        directionUpdated = false;
+                    }
                     break;
                 case Keys.S:
                 case Keys.Down:
-                    if (direction != Direction.down && direction != Direction.up)
+                    if (direction != Direction.down && direction != Direction.up && directionUpdated == true)
+                    {
                         direction = Direction.down;
+                        directionUpdated = false;
+                    }
                     break;
                 case Keys.A:
                 case Keys.Left:
-                    if (direction != Direction.left && direction != Direction.right)
+                    if (direction != Direction.left && direction != Direction.right && directionUpdated == true)
+                    {
                         direction = Direction.left;
+                        directionUpdated = false;
+                    }
+                    break;
+                case Keys.R:
+                    snake.Add(new Point(lastPoint.X, lastPoint.Y));
                     break;
                 case Keys.Space:
                 case Keys.Enter:
-                    if (state == State.gameOver) {
+                    if (state == State.gameOver)
+                    {
                         timer1.Start();
-
+                        MakeSnake();
+                        makeFood();
                         state = State.game;
+                        direction = Direction.up;
                     }
+                    break;
+                case Keys.P:
+                    if (state == State.game)
+                        state = State.gamePuased;
+                    else
+                    {
+                        if (state == State.gamePuased)
+                        {
+                            state = State.game;
+                            timer1.Start();
+                        }
+                    }
+                break;
+                case Keys.O:
+                    makeFood();
                     break;
             }
         }
@@ -163,18 +270,23 @@ namespace SnakeGame
 
         private void timer1_Tick(object sender, EventArgs e)
         {
-            if (timer1.Interval == 50)
+            if (timer1.Interval == 10)
             {
                 //One Time Run Code here!
+                makeFood();
 
                 timer1.Interval = 100;
             }
-            else {
+            else
+            {
                 //Update Code Here
                 MoveSnake();
                 collisionTest();
 
                 if (state == State.gameOver)
+                    timer1.Stop();
+
+                if (state == State.gamePuased)
                     timer1.Stop();
 
                 this.Refresh();
