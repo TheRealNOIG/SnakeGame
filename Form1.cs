@@ -21,8 +21,8 @@ namespace SnakeGame
         private List<Point> snake = new List<Point>();
         private Point newPoint = new Point();
         private Point lastPoint = new Point();
-        private Brush snakeColor = new SolidBrush(Color.Green);
-        private Brush snakeHeadColor = new SolidBrush(Color.DarkRed);
+        private SolidBrush snakeColor = new SolidBrush(Color.Green);
+        private SolidBrush snakeHeadColor = new SolidBrush(Color.DarkRed);
         private Pen pen = new Pen(Color.Black, 1);
 
         private Direction direction;
@@ -31,10 +31,11 @@ namespace SnakeGame
         private Size gridSize = new Size(40, 30);
         private int blockSize = 25;
         private Rectangle[,] grid;
-        private Brush boarderColor = new SolidBrush(Color.Black);
+        private SolidBrush boarderColor = new SolidBrush(Color.Black);
 
         private Random rnd = new Random();
         private Point foodPoint;
+        private SolidBrush foodColor = new SolidBrush(Color.Purple);
 
         private bool directionUpdated = true;
 
@@ -167,7 +168,7 @@ namespace SnakeGame
                 e.Graphics.FillRectangle(boarderColor, grid[i, 0]);
                 e.Graphics.FillRectangle(boarderColor, grid[i, gridSize.Height - 1]);
             }
-            for (int i = 0; i < gridSize.Height; i++)
+            for (int i = 1; i < gridSize.Height - 1; i++)
             {
                 e.Graphics.FillRectangle(boarderColor, grid[0, i]);
                 e.Graphics.FillRectangle(boarderColor, grid[gridSize.Width - 1, i]);
@@ -181,7 +182,8 @@ namespace SnakeGame
                     e.Graphics.FillRectangle(snakeColor, grid[snake[i].X, snake[i].Y]);
             }
 
-            e.Graphics.FillRectangle(new SolidBrush(Color.Purple), grid[foodPoint.X, foodPoint.Y]);
+            e.Graphics.FillRectangle(foodColor, grid[foodPoint.X, foodPoint.Y]);
+            e.Graphics.DrawRectangle(pen, grid[foodPoint.X, foodPoint.Y]);
 
 
             /*
@@ -192,6 +194,10 @@ namespace SnakeGame
                     //e.Graphics.DrawRectangle(pen, grid[i + 1, w + 1]);
                 }
             }*/
+
+            for (int i = 0; i < snake.Count; i++) {
+                e.Graphics.DrawRectangle(pen, snake[i].X * blockSize, snake[i].Y * blockSize, blockSize, blockSize);
+            }
 
         }
 
@@ -247,18 +253,32 @@ namespace SnakeGame
                     break;
                 case Keys.P:
                     if (state == State.game)
+                    {
                         state = State.gamePuased;
+                        snakeColor.Color = Color.FromArgb(50, snakeColor.Color);
+                        snakeHeadColor.Color = Color.FromArgb(50, snakeHeadColor.Color);
+                        boarderColor.Color = Color.FromArgb(50, boarderColor.Color);
+                        foodColor.Color = Color.FromArgb(50, foodColor.Color);
+                        
+                    }
                     else
                     {
                         if (state == State.gamePuased)
                         {
                             state = State.game;
                             timer1.Start();
+                            snakeColor.Color = Color.FromArgb(255, snakeColor.Color);
+                            snakeHeadColor.Color = Color.FromArgb(255, snakeHeadColor.Color);
+                            boarderColor.Color = Color.FromArgb(255, boarderColor.Color);
+                            foodColor.Color = Color.FromArgb(255, foodColor.Color);
                         }
                     }
                 break;
                 case Keys.O:
                     makeFood();
+                    break;
+                case Keys.Escape:
+                    Application.Exit();
                     break;
             }
         }
